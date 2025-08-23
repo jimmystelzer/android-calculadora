@@ -45,7 +45,8 @@ fun CalculatorScreen() {
     var operand1 by rememberSaveable { mutableStateOf<Double?>(null) }
 
     fun onNumberClick(number: String) {
-        if (display == "0") {
+        if (number == "," && currentInput.contains(",")) return
+        if (display == "0" && number != ",") {
             display = number
         } else {
             display += number
@@ -55,7 +56,10 @@ fun CalculatorScreen() {
 
     fun onOperatorClick(operator: String) {
         if (currentInput.isNotEmpty()) {
-            operand1 = display.toDouble()
+            if (currentInput.endsWith(",")) {
+                currentInput = currentInput.dropLast(1)
+            }
+            operand1 = display.replace(",", ".").toDouble()
             currentInput = ""
         }
         currentOperator = operator
@@ -64,7 +68,10 @@ fun CalculatorScreen() {
 
     fun onEqualsClick() {
         if (operand1 != null && currentInput.isNotEmpty() && currentOperator != null) {
-            val operand2 = currentInput.toDouble()
+            if (currentInput.endsWith(",")) {
+                currentInput = currentInput.dropLast(1)
+            }
+            val operand2 = currentInput.replace(",", ".").toDouble()
             val result = when (currentOperator) {
                 "+" -> operand1!! + operand2
                 "-" -> operand1!! - operand2
@@ -72,7 +79,7 @@ fun CalculatorScreen() {
                 "/" -> if (operand2 != 0.0) operand1!! / operand2 else Double.NaN
                 else -> 0.0
             }
-            display = if (result.isNaN()) "Erro" else result.toString()
+            display = if (result.isNaN()) "Erro" else result.toString().replace(".", ",")
             currentInput = display
             operand1 = null
             currentOperator = null
@@ -85,6 +92,37 @@ fun CalculatorScreen() {
         currentOperator = null
         operand1 = null
     }
+
+    fun onDeleteClick() {
+        if (currentInput.isNotEmpty()) {
+            currentInput = currentInput.dropLast(1)
+            display = display.dropLast(1)
+        }
+        if (display.isEmpty()) {
+            display = "0"
+        }
+    }
+
+    fun onPercentageClick() {
+        if (currentInput.isNotEmpty()) {
+            val number = currentInput.replace(",", ".").toDouble()
+            val result = if (operand1 != null && currentOperator != null) {
+                (operand1!! * number) / 100
+            } else {
+                number / 100
+            }
+            display = result.toString().replace(".", ",")
+            currentInput = display
+        }
+    }
+
+    val buttons = listOf(
+        "C", "<-", "%", "/",
+        "7", "8", "9", "*",
+        "4", "5", "6", "-",
+        "1", "2", "3", "+",
+        "0", ",", "="
+    )
 
     BoxWithConstraints {
         val isLandscape = maxWidth > maxHeight
@@ -107,28 +145,33 @@ fun CalculatorScreen() {
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Row(modifier = Modifier.fillMaxWidth()) {
+                        CalculatorButton(text = "C", onClick = { onClearClick() }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "<-", onClick = { onDeleteClick() }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "%", onClick = { onPercentageClick() }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "/", onClick = { onOperatorClick("/") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                    }
+                    Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "7", onClick = { onNumberClick("7") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "8", onClick = { onNumberClick("8") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "9", onClick = { onNumberClick("9") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
-                        CalculatorButton(text = "/", onClick = { onOperatorClick("/") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "*", onClick = { onOperatorClick("*") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "4", onClick = { onNumberClick("4") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "5", onClick = { onNumberClick("5") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "6", onClick = { onNumberClick("6") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
-                        CalculatorButton(text = "*", onClick = { onOperatorClick("*") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "-", onClick = { onOperatorClick("-") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "1", onClick = { onNumberClick("1") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "2", onClick = { onNumberClick("2") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "3", onClick = { onNumberClick("3") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
-                        CalculatorButton(text = "-", onClick = { onOperatorClick("-") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "+", onClick = { onOperatorClick("+") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        CalculatorButton(text = "0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
-                        CalculatorButton(text = "C", onClick = { onClearClick() }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
+                        CalculatorButton(text = "0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(2f).aspectRatio(3f).padding(4.dp))
+                        CalculatorButton(text = ",", onClick = { onNumberClick(",") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                         CalculatorButton(text = "=", onClick = { onEqualsClick() }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
-                        CalculatorButton(text = "+", onClick = { onOperatorClick("+") }, modifier = Modifier.weight(1f).aspectRatio(1.5f).padding(4.dp))
                     }
                 }
             }
@@ -150,28 +193,33 @@ fun CalculatorScreen() {
                 )
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(modifier = Modifier.fillMaxWidth()) {
+                        CalculatorButton(text = "C", onClick = { onClearClick() }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "<-", onClick = { onDeleteClick() }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "%", onClick = { onPercentageClick() }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "/", onClick = { onOperatorClick("/") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                    }
+                    Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "7", onClick = { onNumberClick("7") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "8", onClick = { onNumberClick("8") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "9", onClick = { onNumberClick("9") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
-                        CalculatorButton(text = "/", onClick = { onOperatorClick("/") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "*", onClick = { onOperatorClick("*") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "4", onClick = { onNumberClick("4") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "5", onClick = { onNumberClick("5") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "6", onClick = { onNumberClick("6") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
-                        CalculatorButton(text = "*", onClick = { onOperatorClick("*") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "-", onClick = { onOperatorClick("-") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
                         CalculatorButton(text = "1", onClick = { onNumberClick("1") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "2", onClick = { onNumberClick("2") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "3", onClick = { onNumberClick("3") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
-                        CalculatorButton(text = "-", onClick = { onOperatorClick("-") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "+", onClick = { onOperatorClick("+") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        CalculatorButton(text = "0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
-                        CalculatorButton(text = "C", onClick = { onClearClick() }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
+                        CalculatorButton(text = "0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(2f).aspectRatio(2f).padding(4.dp))
+                        CalculatorButton(text = ",", onClick = { onNumberClick(",") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                         CalculatorButton(text = "=", onClick = { onEqualsClick() }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
-                        CalculatorButton(text = "+", onClick = { onOperatorClick("+") }, modifier = Modifier.weight(1f).aspectRatio(1f).padding(4.dp))
                     }
                 }
             }
@@ -185,7 +233,7 @@ fun CalculatorButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isOperator = text in listOf("/", "*", "-", "+", "=")
+    val isOperator = text in listOf("/", "*", "-", "+", "=", "%", "<-")
     val buttonColors = if (isOperator) {
         ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
     } else {
