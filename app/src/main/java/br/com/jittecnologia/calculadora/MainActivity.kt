@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.jittecnologia.calculadora.ui.theme.CalculadoraTheme
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,9 @@ fun CalculatorScreen() {
     var currentInput by rememberSaveable { mutableStateOf("") }
     var currentOperator by rememberSaveable { mutableStateOf<String?>(null) }
     var operand1 by rememberSaveable { mutableStateOf<Double?>(null) }
+
+    val df = DecimalFormat("#,##########.##########")
+    df.roundingMode = RoundingMode.HALF_UP
 
     fun onNumberClick(number: String) {
         if (number == "," && currentInput.contains(",")) return
@@ -79,7 +84,7 @@ fun CalculatorScreen() {
                 "/" -> if (operand2 != 0.0) operand1!! / operand2 else Double.NaN
                 else -> 0.0
             }
-            display = if (result.isNaN()) "Erro" else result.toString().replace(".", ",")
+            display = if (result.isNaN()) "Erro" else df.format(result).replace(".", ",")
             currentInput = display
             operand1 = null
             currentOperator = null
@@ -111,7 +116,7 @@ fun CalculatorScreen() {
             } else {
                 number / 100
             }
-            display = result.toString().replace(".", ",")
+            display = df.format(result).replace(".", ",")
             currentInput = display
         }
     }
@@ -125,9 +130,10 @@ fun CalculatorScreen() {
     )
 
     BoxWithConstraints {
+        val isLargeScreen = maxWidth > 600.dp
         val isLandscape = maxWidth > maxHeight
 
-        if (isLandscape) {
+        if (isLargeScreen || isLandscape) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -237,7 +243,7 @@ fun CalculatorButton(
     val buttonColors = if (isOperator) {
         ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
     } else {
-        ButtonDefaults.buttonColors()
+        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     }
 
     Button(
